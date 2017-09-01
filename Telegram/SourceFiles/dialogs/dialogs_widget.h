@@ -24,6 +24,8 @@ Copyright (c) 2014-2017 John Preston, https://desktop.telegram.org
 #include "ui/widgets/scroll_area.h"
 
 class DialogsInner;
+class CustomDialogsInner;
+class CustomDialogsWidget; // Custom
 
 namespace Dialogs {
 class Row;
@@ -57,6 +59,7 @@ enum DialogsSearchRequestType {
 
 class DialogsWidget : public Window::AbstractSectionWidget, public RPCSender {
 	Q_OBJECT
+	friend CustomDialogsWidget; // Custom
 
 public:
 	DialogsWidget(QWidget *parent, gsl::not_null<Window::Controller*> controller);
@@ -187,7 +190,7 @@ private:
 	object_ptr<Ui::CrossButton> _cancelSearch;
 	object_ptr<Ui::IconButton> _lockUnlock;
 	object_ptr<Ui::ScrollArea> _scroll;
-	QPointer<DialogsInner> _inner;
+	QPointer<CustomDialogsInner> _inner; // Custom
 	class UpdateButton;
 	object_ptr<UpdateButton> _updateTelegram = { nullptr };
 
@@ -228,4 +231,60 @@ private:
 	object_ptr<QTimer> _draggingScrollTimer = { nullptr };
 	int _draggingScrollDelta = 0;
 
+};
+
+// == Custom =======================================================================================================
+
+enum class ePeerTypeFilter
+{
+	all,
+	user,
+	channel,
+	chat
+};
+
+class PeerTypeFilterWidget : public TWidget
+{
+	Q_OBJECT
+
+public:
+	explicit PeerTypeFilterWidget(QWidget *parent);
+
+signals:
+	void filteredByType(ePeerTypeFilter type);
+
+protected:
+
+private slots:
+	void onBtnAllClick();
+
+	void onBtnUserClick();
+	
+	void onBtnChannelClick();
+
+	void onBtnChatClick();
+
+private:
+	object_ptr<QHBoxLayout> boxHor;
+	object_ptr<Ui::FlatButton> btnAll;
+	object_ptr<Ui::FlatButton> btnUser;
+	object_ptr<Ui::FlatButton> btnChannel;
+	object_ptr<Ui::FlatButton> btnChat;
+};
+
+class CustomDialogsWidget : public DialogsWidget
+{
+	Q_OBJECT
+
+public:
+	CustomDialogsWidget(QWidget* parent, gsl::not_null<Window::Controller*> controller);
+
+protected:
+	void resizeEvent(QResizeEvent *e) override;
+
+private slots:
+	void onPeerTypeFilter(ePeerTypeFilter filter);
+
+private:
+	PeerTypeFilterWidget peerFilterWidget;
 };

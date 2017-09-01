@@ -38,8 +38,11 @@ namespace Window {
 class Controller;
 } // namespace Window
 
+class CustomDialogsInner; // Custom
+
 class DialogsInner : public Ui::SplittedWidget, public RPCSender, private base::Subscriber {
 	Q_OBJECT
+	friend class CustomDialogsInner; // Custom
 
 public:
 	DialogsInner(QWidget *parent, gsl::not_null<Window::Controller*> controller, QWidget *main);
@@ -296,3 +299,18 @@ private:
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(DialogsInner::UpdateRowSections);
+
+// == Custom ======================================================================================================================
+
+class CustomDialogsInner : public DialogsInner
+{
+public:
+	CustomDialogsInner(QWidget* parent, const gsl::not_null<Window::Controller*> controller, QWidget* main);
+
+	void onFilterByTypeUpdate(ePeerTypeFilter filter);
+
+protected:
+
+private:
+
+};

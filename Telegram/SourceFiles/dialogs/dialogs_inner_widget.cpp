@@ -2265,3 +2265,64 @@ MsgId DialogsInner::lastSearchMigratedId() const {
 	return _lastSearchMigratedId;
 }
 
+// == Custom ==================================================================================================
+
+CustomDialogsInner::CustomDialogsInner(QWidget* parent, const gsl::not_null<Window::Controller*> controller, QWidget* main)
+	: DialogsInner(parent, controller, main)
+{
+}
+
+void CustomDialogsInner::onFilterByTypeUpdate(ePeerTypeFilter filter)
+{
+	/*if(!_filterResults.isEmpty())
+	{
+		FilteredDialogs filteredResults;
+		std::copy_if(std::begin(_filterResults), std::end(_filterResults), std::back_inserter(filteredResults), [filter](Dialogs::Row* row) {
+			switch (filter)
+			{
+			case ePeerTypeFilter::user:
+				return row->history()->peer->isUser();
+			case ePeerTypeFilter::channel: 
+				return row->history()->peer->isChannel();
+			case ePeerTypeFilter::chat: 
+				return row->history()->peer->isChat();
+			}
+		});
+
+		_filterResults = std::move(filteredResults);
+	}*/
+	
+	if(filter == ePeerTypeFilter::all)
+	{
+		_filterResults.clear();
+		_state = DefaultState;
+		refresh(true);
+		return;
+	}
+
+	FilteredDialogs filteredByType;
+	for(auto* row : _dialogs->all())
+	{
+		if(filter == ePeerTypeFilter::user && row->history()->peer->isUser())
+		{
+			filteredByType.push_back(row);
+			continue;
+		}
+
+		if (filter == ePeerTypeFilter::channel && row->history()->peer->isChannel())
+		{
+			filteredByType.push_back(row);
+			continue;
+		}
+
+		if (filter == ePeerTypeFilter::chat && row->history()->peer->isChat())
+		{
+			filteredByType.push_back(row);
+			continue;
+		}
+	}
+
+	_filterResults = std::move(filteredByType);
+	_state = FilteredState;
+	refresh(true);
+}

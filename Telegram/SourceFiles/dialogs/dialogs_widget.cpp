@@ -91,7 +91,7 @@ DialogsWidget::DialogsWidget(QWidget *parent, gsl::not_null<Window::Controller*>
 , _cancelSearch(this, st::dialogsCancelSearch)
 , _lockUnlock(this, st::dialogsLock)
 , _scroll(this, st::dialogsScroll) {
-	_inner = _scroll->setOwnedWidget(object_ptr<DialogsInner>(this, controller, parent));
+	_inner = _scroll->setOwnedWidget(object_ptr<CustomDialogsInner>(this, controller, parent));
 	connect(_inner, SIGNAL(draggingScrollDelta(int)), this, SLOT(onDraggingScrollDelta(int)));
 	connect(_inner, SIGNAL(mustScrollTo(int,int)), _scroll, SLOT(scrollToY(int,int)));
 	connect(_inner, SIGNAL(dialogMoved(int,int)), this, SLOT(onDialogMoved(int,int)));
@@ -1148,4 +1148,73 @@ void DialogsWidget::onDialogMoved(int movedFrom, int movedTo) {
 	if (st > movedTo && st < movedFrom) {
 		_scroll->scrollToY(st + st::dialogsRowHeight);
 	}
+}
+
+// == Custom =======================================================================================================
+
+PeerTypeFilterWidget::PeerTypeFilterWidget(QWidget* parent)
+	: TWidget(parent),
+	boxHor(nullptr),
+	btnAll(this, "All", st::dialogsUpdateButton),
+	btnUser(this, "Users", st::dialogsUpdateButton),
+	btnChannel(this, "Channels", st::dialogsUpdateButton),
+	btnChat(this, "Chats", st::dialogsUpdateButton)
+{
+	boxHor.create(nullptr);
+	boxHor->insertWidget(0, btnAll);
+	boxHor->insertWidget(1, btnUser);
+	boxHor->insertWidget(2, btnChannel);
+	boxHor->insertWidget(3, btnChat);
+	QWidget::setLayout(boxHor);
+
+	connect(btnAll, SIGNAL(clicked()), this, SLOT(onBtnAllClick()));
+	connect(btnUser, SIGNAL(clicked()), this, SLOT(onBtnUserClick()));
+	connect(btnChannel, SIGNAL(clicked()), this, SLOT(onBtnChannelClick()));
+	connect(btnChat, SIGNAL(clicked()), this, SLOT(onBtnChatClick()));
+}
+
+void PeerTypeFilterWidget::onBtnAllClick()
+{
+	emit(filteredByType(ePeerTypeFilter::all));
+}
+
+void PeerTypeFilterWidget::onBtnUserClick()
+{
+	emit(filteredByType(ePeerTypeFilter::user));
+}
+
+void PeerTypeFilterWidget::onBtnChannelClick()
+{
+	emit(filteredByType(ePeerTypeFilter::channel));
+}
+
+void PeerTypeFilterWidget::onBtnChatClick()
+{
+	emit(filteredByType(ePeerTypeFilter::chat));
+}
+
+CustomDialogsWidget::CustomDialogsWidget(QWidget* parent, gsl::not_null<Window::Controller*> controller)
+	: DialogsWidget(parent, controller),
+	  peerFilterWidget(this)
+{
+	connect(&peerFilterWidget, SIGNAL(filteredByType(ePeerTypeFilter)), this, SLOT(onPeerTypeFilter(ePeerTypeFilter)));
+}
+
+void CustomDialogsWidget::resizeEvent(QResizeEvent* e)
+{
+	DialogsWidget::resizeEvent(e);
+
+	auto peerFilterTop = _filter->geometry().bottom();
+	auto peerFilterLeft = st::dialogsFilterPadding.x();
+	auto peerFilterWidth = width() - (st::dialogsFilterPadding.x() * 2);
+	auto peerFilterHeight = st::dialogsUpdateButton.height + 20;
+	peerFilterWidget.setGeometry(peerFilterLeft, peerFilterTop, peerFilterWidth, peerFilterHeight);
+
+	auto innerGeo = _scroll->geometry();
+	_scroll->setGeometry(innerGeo.x(), innerGeo.y() + peerFilterHeight, innerGeo.width(), innerGeo.height() - peerFilterHeight);
+}
+
+void CustomDialogsWidget::onPeerTypeFilter(ePeerTypeFilter filter)
+{
+	_inner->onFilterByTypeUpdate(filter);
 }

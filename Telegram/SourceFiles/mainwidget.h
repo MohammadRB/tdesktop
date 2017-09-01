@@ -71,6 +71,7 @@ class DialogsWidget;
 class HistoryWidget;
 class OverviewWidget;
 class HistoryHider;
+class CustomDialogsWidget;
 
 enum StackItemType {
 	HistoryStackItem,
@@ -616,7 +617,7 @@ private:
 
 	object_ptr<Ui::PlainShadow> _sideShadow;
 	object_ptr<TWidget> _sideResizeArea;
-	object_ptr<DialogsWidget> _dialogs;
+	object_ptr<CustomDialogsWidget> _dialogs; // Custom
 	object_ptr<HistoryWidget> _history;
 	object_ptr<Window::SectionWidget> _wideSection = { nullptr };
 	object_ptr<Window::SectionWidget> _thirdSection = { nullptr };
